@@ -1,168 +1,76 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-// Structure to store account details
-struct Account {
-    char accountNumber[20];
-    char pin[5];
-    float balance;
-};
-
-// Function declarations
-void displayMenu();
-void balanceInquiry(struct Account *account);
-void cashDeposit(struct Account *account);
-void cashWithdrawal(struct Account *account);
-void updateAccount(struct Account account);
-struct Account loadAccount(char *accountNumber, char *pin);
-int authenticate(char *accountNumber, char *pin);
+unsigned long amount = 1000, deposit, withdraw;
+int choice, k;
+char transaction = 'y';
+char pin[5]; // Use a string for the PIN
 
 int main() {
-    char accountNumber[20];
-    char pin[5];
-    struct Account account;
-    
-    // Authentication process
-    printf("Enter your account number: ");
-    scanf("%s", accountNumber);
-    printf("Enter your PIN: ");
-    scanf("%s", pin);
-
-    // Check if account exists and pin matches
-    if (!authenticate(accountNumber, pin)) {
-        printf("Invalid account number or PIN.\n");
-        return 0;
+    // Prompt for PIN until correct one is entered
+    while (1) {
+        printf("ENTER YOUR SECRET PIN NUMBER: ");
+        scanf("%s", pin); // Read PIN as a string
+        if (strcmp(pin, "1520") == 0) { // Compare as strings
+            break; // Exit the loop if PIN is correct
+        }
+        printf("PLEASE ENTER VALID PASSWORD\n");
     }
 
-    // Load the account details
-    account = loadAccount(accountNumber, pin);
-    
-    int choice;
-    while (1) {
-        displayMenu();
-        printf("Choose an option: ");
+    do {
+        printf("******** Welcome to ATM Service **************\n");
+        printf("1. Check Balance\n");
+        printf("2. Withdraw Cash\n");
+        printf("3. Deposit Cash\n");
+        printf("4. Quit\n");
+        printf("******************?****************************\n\n");
+        printf("Enter your choice: ");
         scanf("%d", &choice);
-        
+
         switch (choice) {
             case 1:
-                balanceInquiry(&account);
+                printf("\nYOUR BALANCE IN Rs: %lu\n", amount);
                 break;
             case 2:
-                cashDeposit(&account);
+                printf("\nENTER THE AMOUNT TO WITHDRAW: ");
+                scanf("%lu", &withdraw);
+                if (withdraw % 100 != 0) {
+                    printf("\nPLEASE ENTER THE AMOUNT IN MULTIPLES OF 100\n");
+                } else if (withdraw > (amount - 500)) {
+                    printf("\nINSUFFICIENT BALANCE\n");
+                } else if (withdraw <= 0) {
+                    printf("\nPLEASE ENTER A POSITIVE AMOUNT\n");
+                } else {
+                    amount -= withdraw;
+                    printf("\nPLEASE COLLECT CASH\n");
+                    printf("YOUR CURRENT BALANCE IS Rs: %lu\n", amount);
+                }
                 break;
             case 3:
-                cashWithdrawal(&account);
+                printf("\nENTER THE AMOUNT TO DEPOSIT: ");
+                scanf("%lu", &deposit);
+                if (deposit <= 0) {
+                    printf("\nPLEASE ENTER A POSITIVE AMOUNT\n");
+                } else {
+                    amount += deposit;
+                    printf("YOUR BALANCE IS Rs: %lu\n", amount);
+                }
                 break;
             case 4:
-                printf("Exiting...\n");
-                updateAccount(account); // Save account details before exit
-                return 0;
+                printf("\nTHANK YOU FOR USING ATM\n");
+                break;
             default:
-                printf("Invalid option. Please try again.\n");
+                printf("\nINVALID CHOICE\n");
         }
-    }
-    
-    return 0;
-}
 
-// Function to display the ATM menu
-void displayMenu() {
-    printf("\n--- ATM Menu ---\n");
-    printf("1. Balance Inquiry\n");
-    printf("2. Cash Deposit\n");
-    printf("3. Cash Withdrawal\n");
-    printf("4. Exit\n");
-}
+        printf("\n\nDO YOU WISH TO HAVE ANOTHER TRANSACTION? (y/n): \n");
+        while (getchar() != '\n'); // Clear the newline character from the buffer
+        scanf("%c", &transaction);
+        if (transaction == 'n' || transaction == 'N') {
+            k = 1; // Set k to 1 to exit the loop
+        }
+    } while (!k);
 
-// Function to check account balance
-void balanceInquiry(struct Account *account) {
-    printf("Your current balance is: $%.2f\n", account->balance);
-}
-
-// Function to deposit cash into the account
-void cashDeposit(struct Account *account) {
-    float depositAmount;
-    printf("Enter the amount to deposit: $");
-    scanf("%f", &depositAmount);
-    
-    if (depositAmount > 0) {
-        account->balance += depositAmount;
-        printf("Deposit successful. Your new balance is: $%.2f\n", account->balance);
-    } else {
-        printf("Invalid amount. Please try again.\n");
-    }
-}
-
-// Function to withdraw cash from the account
-void cashWithdrawal(struct Account *account) {
-    float withdrawalAmount;
-    printf("Enter the amount to withdraw: $");
-    scanf("%f", &withdrawalAmount);
-    
-    if (withdrawalAmount > 0 && withdrawalAmount <= account->balance) {
-        account->balance -= withdrawalAmount;
-        printf("Withdrawal successful. Your new balance is: $%.2f\n", account->balance);
-    } else if (withdrawalAmount > account->balance) {
-        printf("Insufficient balance.\n");
-    } else {
-        printf("Invalid amount. Please try again.\n");
-    }
-}
-
-// Function to update the account file after a transaction
-void updateAccount(struct Account account) {
-    FILE *file;
-    char filename[30];
-    sprintf(filename, "%s.txt", account.accountNumber);
-    
-    file = fopen(filename, "w");
-    if (file == NULL) {
-        printf("Error updating account details.\n");
-        return;
-    }
-    
-    fprintf(file, "%s %s %.2f\n", account.accountNumber, account.pin, account.balance);
-    fclose(file);
-}
-
-// Function to load account details from file
-struct Account loadAccount(char *accountNumber, char *pin) {
-    struct Account account;
-    FILE *file;
-    char filename[30];
-    sprintf(filename, "%s.txt", accountNumber);
-    
-    file = fopen(filename, "r");
-    if (file == NULL) {
-        printf("Error loading account details.\n");
-        exit(1);
-    }
-    
-    fscanf(file, "%s %s %f", account.accountNumber, account.pin, &account.balance);
-    fclose(file);
-    
-    return account;
-}
-
-// Function to authenticate user based on account number and PIN
-int authenticate(char *accountNumber, char *pin) {
-    FILE *file;
-    char filename[30];
-    char storedAccountNumber[20], storedPin[5];
-    
-    sprintf(filename, "%s.txt", accountNumber);
-    file = fopen(filename, "r");
-    if (file == NULL) {
-        return 0; // Account doesn't exist
-    }
-    
-    fscanf(file, "%s %s", storedAccountNumber, storedPin);
-    fclose(file);
-    
-    if (strcmp(storedAccountNumber, accountNumber) == 0 && strcmp(storedPin, pin) == 0) {
-        return 1; // Authentication successful
-    }
-    
-    return 0; // Authentication failed
+    printf("\nTHANKS FOR USING OUR ATM SERVICE\n");
+    return 0; // Return 0 to indicate successful termination
 }
